@@ -1,0 +1,12 @@
+.DS_Store
+bin/
+include/
+lib/
+log/
+share/
+src/__pycache__/
+tmp/*
+!/tmp/TEST1NG/
+tmp/TEST1NG/*.[1-99]
+*.cfg
+*.html
