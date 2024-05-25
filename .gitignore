@@ -9,4 +9,3 @@ tmp/*
 !/tmp/TEST1NG/
 tmp/TEST1NG/*.[1-99]
 *.cfg
-*.html

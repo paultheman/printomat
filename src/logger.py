@@ -1,9 +1,13 @@
 import logging, logging.handlers
 import os
+from constants import *
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-folder_path = os.path.join('..', 'log')
+
+log_level = logging.DEBUG if DEBUG is True else logging.INFO
+logger.setLevel(log_level)
+
+folder_path = 'log'
 if not os.path.exists(folder_path):
     os.makedirs(folder_path)
 #file_handler = logging.handlers.RotatingFileHandler(filename=(os.path.join(folder_path, datetime.now().strftime("%Y%m%d") + '.log')), 

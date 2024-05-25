@@ -1,33 +1,24 @@
 import tkinter as tk
 from tkinter import ttk
-from rand import RAND_SEQ_LENGTH, ENTRIES_FPATH
 from logger import logger
 import os
 from PIL import Image, ImageTk, ImageOps
 from guielements import *
 from pdftools import PDFModifier
+from constants import *
+
+import subprocess
 
 
 
-FILE_TYPES = ['.jpg', '.jpeg', '.png', '.pdf', '.tiff', '.bmp', '.gif']
-
-
-class App(tk.Tk):
-    INACTIVITY_LIMIT = 20 * 1000    # milliseconds
-    MAX_TRIES_TIMEOUT = 10          # seconds
-    MAX_TRIES = 10                  # maximum tries to enter a string
-    C_WIDTH = 500                   # preview tk.Canvas width
-    C_HEIGHT = 500                  # preview tk.Canvas height
-    W_WIDTH = 1024                  # window width
-    W_HEIGHT = 600                  # window height
-
+class Printomat(tk.Tk):
 
     def __init__(self, **kw):
         super().__init__(**kw)         
 
         self.title("Printomat")
         self.theme = "park"
-        self.theme_path = os.path.join('..', 'themes', self.theme.lower(), self.theme.lower() + '.tcl')
+        self.theme_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'themes', self.theme.lower(), self.theme.lower() + '.tcl')
         self.tk.call("source", self.theme_path)
         self.tk.call("set_theme", "dark")
     
@@ -79,7 +70,7 @@ class App(tk.Tk):
         self.first_screen()
         
         self.eval('tk::PlaceWindow . center')
-        self.geometry(f"{App.W_WIDTH}x{App.W_HEIGHT}")
+        self.geometry(f"{W_WIDTH}x{W_HEIGHT}")
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -93,14 +84,14 @@ class App(tk.Tk):
 
         if self.timer_flag is not None:
             self.after_cancel(self.timer_flag)
-        self.timer_flag = self.after(App.INACTIVITY_LIMIT, self.user_is_inactive)
+        self.timer_flag = self.after(INACTIVITY_LIMIT, self.user_is_inactive)
 
 
     def user_is_inactive(self):
         """ Function that is called when the user is inactive after App.timer expires.
         """
 
-        logger.info('Inactivity timeout %s reached.' % App.INACTIVITY_LIMIT)
+        logger.info('Inactivity timeout %s reached.' % INACTIVITY_LIMIT)
         self.first_screen()
 
 
@@ -119,7 +110,7 @@ class App(tk.Tk):
 
         self.cellsFrame = ttk.Frame(master=self.top_container)
         self.cellsFrame.grid(row=0, column=0, sticky='S')
-        self.cellsLabel = ttk.Label(master=self.cellsFrame, text = 'Enter the code you recieved in the cells below:', 
+        self.cellsLabel = ttk.Label(master=self.cellsFrame, text = 'Enter the code you received in the cells below:', 
                                font=("Helvetica", 30), justify='center')
         self.cellsLabel.grid(row=0, column=0, columnspan=RAND_SEQ_LENGTH, pady=(30, 12))
 
@@ -187,7 +178,7 @@ class App(tk.Tk):
         self.docTitle = ttk.Label(master=self.docFrame, justify='center', font=('Helvetica', 18))
         self.docTitle.grid(row=0, column=0, columnspan=3, pady=(10, 5))
         
-        self.canvas = tk.Canvas(master=self.docFrame, width=App.C_WIDTH, height=App.C_HEIGHT)
+        self.canvas = tk.Canvas(master=self.docFrame, width=C_WIDTH, height=C_HEIGHT)
         self.canvas.grid(row=1, column=0, columnspan=3)
         self.canvas_default()
 
@@ -361,10 +352,10 @@ class App(tk.Tk):
         if self.color.get() == "Grayscale":
             img = ImageOps.grayscale(img)
 
-        img.thumbnail((App.C_WIDTH, App.C_HEIGHT), Image.LANCZOS)
+        img.thumbnail((C_WIDTH, C_HEIGHT), Image.LANCZOS)
 
         self.tkimg = ImageTk.PhotoImage(img)        # 'tkimg' is garbage collected after function finishes, self is needed
-        self.canvas.create_image(App.C_WIDTH/2 + 2, App.C_HEIGHT/2 + 2, anchor=tk.CENTER, image=self.tkimg)
+        self.canvas.create_image(C_WIDTH/2 + 2, C_HEIGHT/2 + 2, anchor=tk.CENTER, image=self.tkimg)
 
 
     def canvas_default(self) -> None:
@@ -373,9 +364,9 @@ class App(tk.Tk):
 
         self.canvas.delete('all')
         # canvas.configure(bg='systemWindowBackgroundColor')
-        self.canvas.create_text(int(App.C_WIDTH/2), 170, anchor=tk.CENTER, text='🖨️', font =('Helvetica', 80))
-        self.canvas.create_text(int(App.C_WIDTH/2), 250, anchor=tk.CENTER, text='Select the files to print', font =('Helvetica', 30))
-        self.canvas.create_text(int(App.C_WIDTH/2), 300, anchor=tk.CENTER, text='and preview', font =('Helvetica', 30))
+        self.canvas.create_text(int(C_WIDTH/2), 170, anchor=tk.CENTER, text='🖨️', font =('Helvetica', 80))
+        self.canvas.create_text(int(C_WIDTH/2), 250, anchor=tk.CENTER, text='Select the files to print', font =('Helvetica', 30))
+        self.canvas.create_text(int(C_WIDTH/2), 300, anchor=tk.CENTER, text='and preview', font =('Helvetica', 30))
         
         # disable FileOptions when no files are selected
         self.c_state(self.fileOptions_column, 'disabled')
@@ -457,7 +448,7 @@ class App(tk.Tk):
         match_str = cells.string_to_match.get()
         logger.info('Got new string to match -> \'%s\'' % match_str)
 
-        if self.tries < App.MAX_TRIES:
+        if self.tries < MAX_TRIES:
             logger.debug('Entry tries: \'%s\'' % self.tries)
             self.entry_dir = os.path.join(ENTRIES_FPATH, match_str)
             self.files_found = []
@@ -470,7 +461,7 @@ class App(tk.Tk):
                 for file in os.listdir(self.entry_dir):
 
                     abs_path = os.path.join(self.entry_dir, file)
-                    if any(file.endswith(ext) for ext in FILE_TYPES):
+                    if any(file.endswith('.' + ext) for ext in FILE_TYPES):
                         if not os.path.islink(abs_path) and not os.path.isdir(abs_path):
                             self.files_found.append(file)
 
@@ -488,7 +479,7 @@ class App(tk.Tk):
             tries_label.grid(column=0, row=2, columnspan=RAND_SEQ_LENGTH, pady=(15, 0))
             
             self.c_state(frame, 'disabled')
-            self.tries_countdown(App.MAX_TRIES_TIMEOUT, frame, tries_label)
+            self.tries_countdown(MAX_TRIES_TIMEOUT, frame, tries_label)
 
 
     def tries_countdown(self, count, frame:ttk.Frame, label:ttk.Label) -> None:
@@ -508,7 +499,16 @@ class App(tk.Tk):
 
         for widget in self.winfo_children():
             widget.destroy()
-            
+
 
 if __name__ == "__main__":
-    App()
+    
+    # Start the web server subprocess
+    proc_ws = subprocess.Popen(['python3', os.path.join(WEBSERVER_FPATH, 'webserver.py')])
+    
+    # Start the gui local app
+    Printomat()
+    
+    # Terminate the web server subprocess when the application exits
+    proc_ws.terminate()
+    proc_ws.wait() # Wait for the subprocess to finish

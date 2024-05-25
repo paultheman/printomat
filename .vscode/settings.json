@@ -1,3 +1,6 @@
 {
-    "python.terminal.activateEnvInCurrentTerminal": true
+    "python.defaultInterpreterPath": "${workspaceFolder}/bin/",
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    //"terminal.integrated.shellIntegration.enabled": false,
+    "python.experiments.optOutFrom": ["pythonTerminalEnvVarActivation"]
 }

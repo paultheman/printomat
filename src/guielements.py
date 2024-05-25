@@ -3,6 +3,7 @@ from tkinter import ttk
 from logger import logger
 from pdftools import PDFConverter
 from typing import List
+from constants import *
 
 
 
@@ -27,7 +28,8 @@ class Cells(ttk.Entry):
                              validatecommand=(frame.register(lambda new_value: False if len(new_value) >1 else True), '%P'))
             self.cell.grid(row=row, column=no, padx=5, pady=5)
             self.cell_list.append(self.cell)
-            self.cell.bind('<KeyPress>', self._set_focus) # needed only for physical keyboard input
+            if DEBUG is True:
+                self.cell.bind('<KeyPress>', self._set_focus) # needed only for physical keyboard input
             self.cell.bind('<FocusOut>', self._get_entry_value)
         Cells.counter+=1
         self.cell_list[0].focus()

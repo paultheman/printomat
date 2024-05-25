@@ -4,11 +4,10 @@ from datetime import datetime, time
 import qrcode
 from logger import logger
 import shutil
+from constants import *
+from PIL import Image
+import threading
 
-RAND_SEQ_LENGTH = 7
-COLLECTION = set()
-ENTRIES_FPATH = os.path.join('..', 'tmp')
-ENTRY_RM_INTERVAL = 18000
 
 class Entry:
     counter = 0
@@ -19,7 +18,7 @@ class Entry:
 
         self.timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         self.entry_path = os.path.join(ENTRIES_FPATH, self.genStr)
-        self.createQR()
+        self._qr = self.createQR()
         Entry.counter += 1
         logger.info("Created new Entry -> %s RandomSeq -> '%s'" % (Entry.counter, self.genStr))
 
@@ -36,45 +35,51 @@ class Entry:
     @property
     def genStr(self) -> str:
         return self._genStr
+    
+    @property
+    def qr(self) -> Image:
+        return self._qr
 
-    def createQR(self) -> None:
+    def createQR(self) -> Image:
         qr = qrcode.QRCode(
             version=1,
             box_size=10,
-            border=5
+            border=3
             )        
         qr.add_data(self.genStr)
         qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-        img_name = self.genStr + '_' + self.timestamp +'.png'
         if not os.path.exists(self.entry_path):
             os.makedirs(self.entry_path)
-        img_path = os.path.join(self.entry_path, img_name)
-        img.save(img_path)
-        COLLECTION.add(self.genStr)
+        # returns <class 'qrcode.image.pil.PilImage'>
+        return qr.make_image(fill_color="black", back_color="white")
+
 
 class Cleaner():
-    def clean_old_entries(self, current_Unix_time: float, interval: int) -> set:
-        removed_entries = set()
+    def clean_old_entries(self, interval: int) -> None:
+        
+        current_Unix_time:float = datetime.timestamp(datetime.now())
 
         for folder_name in os.listdir(ENTRIES_FPATH):
+            if DEBUG is True and folder_name == "TEST1NG":
+                continue
             entry_path = os.path.join(ENTRIES_FPATH, folder_name)
             creation_time = os.stat(entry_path).st_ctime
-
+            
             if current_Unix_time - creation_time > interval:
                 log_str = f"Removing '{folder_name}' ... "
                 try:
                     shutil.rmtree(entry_path)
                     log_str += ('Done')
-                    removed_entries.add(folder_name)
                 except Exception as e:
                     log_str += f'Error: {repr(e)}'
     
                 logger.info(log_str)
-        return removed_entries
 
-# removed_entries = Cleaner().clean_old_entries(datetime.timestamp(datetime.now()), ENTRY_RM_INTERVAL)
 
-if __name__ == "__main__":
-    for _ in range(3):
-        Entry()
+def remove_entries():
+    Cleaner().clean_old_entries(ENTRY_RM_INTERVAL)
+    cleaner_thread = threading.Timer(ENTRY_RM_INTERVAL, remove_entries)
+    cleaner_thread.daemon = True
+    cleaner_thread.start()
+
+remove_entries()
