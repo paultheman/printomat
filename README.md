@@ -1,7 +1,6 @@
 # Printomat
-#### ** Work in progress **
 
-![printomat-demo](https://github.com/paultheman/printomat/assets/38941045/63e95631-7f09-431c-bbda-94bd0ee13d81)
+https://github.com/paultheman/printomat/assets/38941045/59640e36-2d70-430a-b9bd-27c9537e29f9
 
 This is proof of concept implementation of a self printing service.  
 The idea is to have a terminal on which you could send / upload documents or pictures and print them yourself.  
@@ -19,6 +18,7 @@ After correctly entering the OTP the second app screen is displayed and the prov
 - pymupdf
 - pillow
 - qrcode
+-flask
 
 Tkinter themes by [RobertJN64](https://github.com/RobertJN64/TKinterModernThemes/commits?author=RobertJN64)
 
